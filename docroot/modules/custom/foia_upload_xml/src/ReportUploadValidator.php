@@ -2,12 +2,12 @@
 
 namespace Drupal\foia_upload_xml;
 
-use Drupal\node\Entity\Node;
-use Drupal\file\FileInterface;
-use Drupal\Core\Form\FormStateInterface;
-use Drupal\Core\Entity\EntityTypeManager;
-use Drupal\Core\TypedData\Exception\MissingDataException;
 use Drupal\Core\DependencyInjection\DependencySerializationTrait;
+use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\Core\TypedData\Exception\MissingDataException;
+use Drupal\file\FileInterface;
+use Drupal\node\Entity\Node;
 
 /**
  * Validates that an uploaded report can overwrite existing report data.
@@ -58,9 +58,9 @@ class ReportUploadValidator {
     $file_data = $this->foiaUploadXmlReportParser->parse($file);
     $report_year = isset($file_data['report_year']) && !empty($file_data['report_year']) ? (int) $file_data['report_year'] : (int) date('Y');
 
-    // If an agency can't be found, allow the upload to continue.
     if (!$file_data['agency_tid']) {
-      return;
+      $form_state->setErrorByName('submit', \Drupal::translation()
+        ->translate("The agency or component abbreviation in the XML does not match the abbreviation in FOIA.gov. Please ensure the agency and component abbreviations match those listed in FOIA.gov. If you are still having trouble, please contact OIP."));
     }
 
     if ($this->agencyReportYearIsLocked($file_data['agency_tid'], $report_year)) {
@@ -183,6 +183,7 @@ class ReportUploadValidator {
 
     $node_query = $this->entityTypeManager->getStorage('node')
       ->getQuery()
+      ->accessCheck(TRUE)
       ->condition('type', 'annual_foia_report_data')
       ->condition('field_agency', $agency_tid)
       ->condition('field_foia_annual_report_yr', $year);

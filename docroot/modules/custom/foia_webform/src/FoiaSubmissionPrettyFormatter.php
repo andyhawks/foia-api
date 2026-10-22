@@ -2,9 +2,9 @@
 
 namespace Drupal\foia_webform;
 
-use Drupal\webform\WebformSubmissionInterface;
 use Dompdf\Dompdf;
 use Drupal\file\Entity\File;
+use Drupal\webform\WebformSubmissionInterface;
 
 /**
  * Class FoiaSubmissionPrettyFormatter.
@@ -59,6 +59,9 @@ class FoiaSubmissionPrettyFormatter {
       'confirmation_id' => $this->webformSubmission->id(),
     ];
     $submissionContents = array_merge($submissionMetadata, $submissionContents);
+    if (!empty($submissionContents['captcha'])) {
+      unset($submissionContents['captcha']);
+    }
     $this->submissionContents = $submissionContents;
   }
 
@@ -140,6 +143,7 @@ class FoiaSubmissionPrettyFormatter {
         'address_line2' => '',
         'address_city' => 'City',
         'address_state_province' => 'State/Province',
+        'address_state_province_international' => 'Non-U.S. State/Province',
         'address_zip_postal_code' => 'Postal Code',
         'address_country' => 'Country',
         'phone_number' => 'Phone',
@@ -246,9 +250,10 @@ class FoiaSubmissionPrettyFormatter {
    * Create a PDF version of the list output.
    */
   public function formatSubmissionContentsAsPdf() {
+    $style = '<style>table{width:100%;table-layout: fixed;overflow-wrap: anywhere;}</style>';
     $header = '<div>FOIA Request ' . $this->foiaRequestId . '</div><br /><br />';
     $dompdf = new Dompdf();
-    $dompdf->loadHtml($header . $this->formatSubmissionContentsAsList());
+    $dompdf->loadHtml($style . $header . $this->formatSubmissionContentsAsList());
     $dompdf->setPaper('letter', 'portrait');
     $dompdf->render();
     return $dompdf->output();

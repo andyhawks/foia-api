@@ -229,6 +229,15 @@ display:
             date_format: short
             custom_date_format: ''
             timezone: ''
+            tooltip:
+              date_format: ''
+              custom_date_format: ''
+            time_diff:
+              enabled: false
+              future_format: '@interval hence'
+              past_format: '@interval ago'
+              granularity: 2
+              refresh: 60
           group_column: value
           group_columns: {  }
           group_rows: true
@@ -688,6 +697,7 @@ display:
         type: mini
         options:
           offset: 0
+          pagination_heading_level: h4
           items_per_page: 10
           total_pages: null
           id: 0
@@ -774,19 +784,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              page_creator: '0'
-              layout_manager: '0'
-              page_reviewer: '0'
-              landing_page_creator: '0'
-              landing_page_reviewer: '0'
-              media_creator: '0'
-              media_manager: '0'
-              agency_component_creator: '0'
-              agency_component_reviewer: '0'
-              agency_administrator: '0'
-              agency_manager: '0'
             placeholder: ''
           is_grouped: false
           group_info:
@@ -831,20 +828,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              page_creator: '0'
-              layout_manager: '0'
-              page_reviewer: '0'
-              landing_page_creator: '0'
-              landing_page_reviewer: '0'
-              media_creator: '0'
-              media_manager: '0'
-              agency_component_creator: '0'
-              agency_component_reviewer: '0'
-              agency_administrator: '0'
-              agency_manager: '0'
-              non_sso: '0'
             min_placeholder: ''
             max_placeholder: ''
             placeholder: ''
@@ -960,19 +943,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              page_creator: '0'
-              layout_manager: '0'
-              page_reviewer: '0'
-              landing_page_creator: '0'
-              landing_page_reviewer: '0'
-              media_creator: '0'
-              media_manager: '0'
-              agency_component_creator: '0'
-              agency_component_reviewer: '0'
-              agency_administrator: '0'
-              agency_manager: '0'
             reduce: false
           is_grouped: false
           group_info:
@@ -1020,19 +990,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              page_creator: '0'
-              layout_manager: '0'
-              page_reviewer: '0'
-              landing_page_creator: '0'
-              landing_page_reviewer: '0'
-              media_creator: '0'
-              media_manager: '0'
-              agency_component_creator: '0'
-              agency_component_reviewer: '0'
-              agency_administrator: '0'
-              agency_manager: '0'
             placeholder: ''
           is_grouped: false
           group_info:
@@ -1072,19 +1029,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              page_creator: '0'
-              layout_manager: '0'
-              page_reviewer: '0'
-              landing_page_creator: '0'
-              landing_page_reviewer: '0'
-              media_creator: '0'
-              media_manager: '0'
-              agency_component_creator: '0'
-              agency_component_reviewer: '0'
-              agency_administrator: '0'
-              agency_manager: '0'
             reduce: false
           is_grouped: false
           group_info:
@@ -1131,20 +1075,6 @@ display:
             multiple: false
             remember_roles:
               authenticated: authenticated
-              anonymous: '0'
-              administrator: '0'
-              page_creator: '0'
-              layout_manager: '0'
-              page_reviewer: '0'
-              landing_page_creator: '0'
-              landing_page_reviewer: '0'
-              media_creator: '0'
-              media_manager: '0'
-              agency_component_creator: '0'
-              agency_component_reviewer: '0'
-              agency_administrator: '0'
-              agency_manager: '0'
-              non_sso: '0'
             min_placeholder: ''
             max_placeholder: ''
             placeholder: ''
@@ -1205,7 +1135,6 @@ display:
         - 'languages:language_interface'
         - url
         - url.query_args
-        - user
         - user.roles
       tags:
         - 'config:field.storage.foia_request.field_agency_component'
@@ -1261,6 +1190,7 @@ display:
       redirect_path: ''
       export_method: batch
       export_batch_size: 1000
+      export_filesystem: public
     cache_metadata:
       max-age: -1
       contexts:
@@ -1268,7 +1198,6 @@ display:
         - 'languages:language_interface'
         - request_format
         - url
-        - user
         - user.roles
       tags:
         - 'config:field.storage.foia_request.field_agency_component'
@@ -1303,7 +1232,6 @@ display:
         - 'languages:language_interface'
         - url
         - url.query_args
-        - user
         - user.roles
       tags:
         - 'config:field.storage.foia_request.field_agency_component'

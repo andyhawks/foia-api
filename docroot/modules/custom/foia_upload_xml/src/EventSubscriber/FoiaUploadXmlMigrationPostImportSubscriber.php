@@ -2,18 +2,18 @@
 
 namespace Drupal\foia_upload_xml\EventSubscriber;
 
-use Drupal\migrate\Row;
+use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\Messenger\MessengerInterface;
 use Drupal\Core\Utility\Error;
-use Drupal\migrate\MigrateMessage;
-use Drupal\migrate\MigrateException;
 use Drupal\migrate\Event\MigrateEvents;
 use Drupal\migrate\Event\MigrateImportEvent;
-use Drupal\Core\Messenger\MessengerInterface;
-use Drupal\migrate\Plugin\MigrationInterface;
-use Drupal\migrate\Plugin\MigrateIdMapInterface;
-use Drupal\migrate\Event\MigratePreRowSaveEvent;
 use Drupal\migrate\Event\MigratePostRowSaveEvent;
-use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\migrate\Event\MigratePreRowSaveEvent;
+use Drupal\migrate\MigrateException;
+use Drupal\migrate\MigrateMessage;
+use Drupal\migrate\Plugin\MigrateIdMapInterface;
+use Drupal\migrate\Plugin\MigrationInterface;
+use Drupal\migrate\Row;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 /**
@@ -27,6 +27,13 @@ class FoiaUploadXmlMigrationPostImportSubscriber implements EventSubscriberInter
    * @var \Drupal\Core\Entity\EntityTypeManagerInterface
    */
   protected $entityTypeManager;
+
+  /**
+   * The event dispatcher.
+   *
+   * @var \Symfony\Component\EventDispatcher\EventDispatcherInterface
+   */
+  protected $eventDispatcher;
 
   /**
    * The messenger.
@@ -114,12 +121,24 @@ class FoiaUploadXmlMigrationPostImportSubscriber implements EventSubscriberInter
 
     try {
       $this->getEventDispatcher()
-        ->dispatch(MigrateEvents::PRE_ROW_SAVE, new MigratePreRowSaveEvent($migration, new MigrateMessage(), $row));
+        ->dispatch(
+          new MigratePreRowSaveEvent(
+            $migration,
+            new MigrateMessage(),
+            $row),
+        MigrateEvents::PRE_ROW_SAVE
+        );
       $destination_ids = $id_map->lookupDestinationIds($row->getSourceIdValues());
       $destination_id_values = $destination_ids ? reset($destination_ids) : [];
       $destination_id_values = $destination->import($row, $destination_id_values);
       $this->getEventDispatcher()
-        ->dispatch(MigrateEvents::POST_ROW_SAVE, new MigratePostRowSaveEvent($migration, new MigrateMessage(), $row, $destination_id_values));
+        ->dispatch(
+        new MigratePostRowSaveEvent($migration,
+          new MigrateMessage(),
+          $row,
+          $destination_id_values),
+        MigrateEvents::POST_ROW_SAVE,
+        );
       $destination_id_values = $destination_id_values ?: [];
       $this->setPartialNodeModerationState($destination_id_values);
       $rollback_action = !empty($destination_id_values) ? $destination->rollbackAction() : NULL;
@@ -143,7 +162,7 @@ class FoiaUploadXmlMigrationPostImportSubscriber implements EventSubscriberInter
    * Gets the event dispatcher.
    *
    * @return \Symfony\Component\EventDispatcher\EventDispatcherInterface
-   *   Return Event Dispatcher servicce if it isn't already set
+   *   Return Event Dispatcher service if it isn't already set
    */
   private function getEventDispatcher() {
     if (!$this->eventDispatcher) {

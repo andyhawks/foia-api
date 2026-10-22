@@ -2,13 +2,13 @@
 
 namespace Drupal\foia_upload_xml;
 
-use Drupal\migrate\Row;
-use Drupal\migrate\MigrateException;
-use Drupal\migrate_tools\MigrateExecutable;
-use Drupal\migrate\Plugin\MigrateIdMapInterface;
-use Drupal\migrate\Plugin\migrate\process\Extract;
-use Drupal\foia_upload_xml\FailedMigrationHandler\SectionMissing;
 use Drupal\foia_upload_xml\FailedMigrationHandler\DefaultHandler;
+use Drupal\foia_upload_xml\FailedMigrationHandler\SectionMissing;
+use Drupal\migrate\MigrateException;
+use Drupal\migrate\Plugin\migrate\process\Extract;
+use Drupal\migrate\Plugin\MigrateIdMapInterface;
+use Drupal\migrate\Row;
+use Drupal\migrate_tools\MigrateExecutable;
 
 /**
  * Wrapper around MigrateExecutable that provides for better failure messaging.
@@ -20,7 +20,7 @@ class FoiaUploadXmlMigrateExecutable extends MigrateExecutable {
   /**
    * {@inheritdoc}
    */
-  public function processRow(Row $row, array $process = NULL, $value = NULL) {
+  public function processRow(Row $row, ?array $process = NULL, $value = NULL) {
     try {
       return parent::processRow($row, $process, $value);
     }
@@ -53,7 +53,8 @@ class FoiaUploadXmlMigrateExecutable extends MigrateExecutable {
    *   message.
    */
   protected function getFailureHandler(\Exception $e) {
-    $failedMethod = reset($e->getTrace());
+    $trace = $e->getTrace();
+    $failedMethod = reset($trace);
     $container = \Drupal::getContainer();
     if ($failedMethod['class'] === Extract::class && $e->getMessage() == 'Input should be an array.') {
       return new SectionMissing($e, $container->get('messenger'), $this->migration, $container->get('string_translation'));

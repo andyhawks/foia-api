@@ -5,19 +5,22 @@ namespace Drupal\foia_api\Plugin\rest\resource;
 use Drupal\Component\Utility\Bytes;
 use Drupal\Component\Utility\Environment;
 use Drupal\Core\File\FileSystemInterface;
+use Drupal\Core\File\FileValidatorInterface;
 use Drupal\file\Entity\File;
+use Drupal\file\FileInterface;
 use Drupal\file\FileUsage\FileUsageInterface;
 use Drupal\file_entity\Entity\FileEntity;
 use Drupal\foia_webform\AgencyLookupServiceInterface;
 use Drupal\node\NodeInterface;
-use Drupal\rest\Plugin\ResourceBase;
 use Drupal\rest\ModifiedResourceResponse;
+use Drupal\rest\Plugin\ResourceBase;
 use Drupal\webform\Entity\Webform;
 use Drupal\webform\Plugin\WebformElementManagerInterface;
 use Drupal\webform\WebformInterface;
 use Drupal\webform\WebformSubmissionForm;
 use Drupal\webform\WebformSubmissionInterface;
 use Psr\Log\LoggerInterface;
+use ReCaptcha\ReCaptcha;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -129,6 +132,16 @@ class WebformSubmissionResource extends ResourceBase {
       return new ModifiedResourceResponse(['errors' => $message], $statusCode);
     }
 
+    // If the site has API User ID configured, require clients to provide it.
+    $api_user_id = \Drupal::config('foia.secrets')->get('api_user_id');
+    $given_user_id_header = $_SERVER["HTTP_X_API_USER_ID"] ?? '';
+    if ($api_user_id && $given_user_id_header !== $api_user_id) {
+      $statusCode = 400;
+      $message = t("To submit FOIA requests using FOIA.gov, you must use the request forms on the site.");
+      $this->logSubmission($statusCode, "api_submission: $message");
+      return new ModifiedResourceResponse(['errors' => $message], $statusCode);
+    }
+
     $webformId = $data['id'] ?? '';
     if (!$webformId) {
       $statusCode = 400;
@@ -152,7 +165,7 @@ class WebformSubmissionResource extends ResourceBase {
     }
 
     $agencyComponent = $this->agencyLookupService->getComponentFromWebform($webformId);
-    if (!$agencyComponent) {
+    if ($webformId !== 'wizard_feedback' && !$agencyComponent) {
       $statusCode = 422;
       $message = t('Submission attempt against webform unassociated with agency component.');
       $this->logSubmission($statusCode, $message);
@@ -169,6 +182,7 @@ class WebformSubmissionResource extends ResourceBase {
 
     // Check for file attachments.
     $fileAttachmentsOnSubmission = $this->getSubmittedFileAttachments($webform, $data);
+    $fileErrors = FALSE;
     if ($fileAttachmentsOnSubmission) {
       $fileErrors = $this->validateAttachmentsContainRequiredInfo($fileAttachmentsOnSubmission);
       if (!$fileErrors) {
@@ -180,9 +194,57 @@ class WebformSubmissionResource extends ResourceBase {
 
     $values['data'] = $data;
 
-    // Validate submission.
     $submissionErrors = WebformSubmissionForm::validateFormValues($values);
     $errors = $fileErrors ? array_merge((array) $submissionErrors, $fileErrors) : $submissionErrors;
+
+    // Validate recaptcha.
+    $captcha_errors = [];
+    $captcha = $values['data']['captcha'];
+    $captcha_errors = $this->validateCaptcha($captcha);
+
+    if (!empty($captcha_errors)) {
+      // The react front end will know that 401 means the captcha failed and
+      // display the appropriate message.
+      $statusCode = 401;
+      $message = t('The captcha failed validation.');
+      $this->logSubmission($statusCode, $message, $agencyComponent);
+      return new ModifiedResourceResponse(['errors' => $captcha_errors], $statusCode);
+    }
+
+    if ($webformId !== 'wizard_feedback' && empty($errors)) {
+      // Validate emal, phone and address,
+      // any one of those three not blank, it should pass.
+      $email = isset($data['email']) && $data['email'];
+      $phoneNumber = isset($data['phone_number']) && $data['phone_number'];
+      $mailingAddress = isset($data['address_line1']) && $data['address_line1']
+      && isset($data['address_city']) && $data['address_city']
+      && ((isset($data['address_state_province']) && $data['address_state_province'])
+          || (isset($data['address_state_province_international']) && $data['address_state_province_international']))
+      && isset($data['address_zip_postal_code']) && $data['address_zip_postal_code']
+      && isset($data['address_country']) && $data['address_country'];
+
+      if (!$mailingAddress && !$email && !$phoneNumber) {
+        $message = 'Please provide at least one form of contact information.';
+        $errors = [
+          'email' => $message,
+          'phone_number' => $message,
+          'address_line1' => $message,
+        ];
+      }
+    }
+    if ($webformId == 'wizard_feedback' && empty($errors)) {
+      // Must include a response to either of the three items.
+      $relevance = !empty($data['results_relevant_to_search']['How relevant were the results to your search?']);
+      $expectations = !empty($data['results_meet_expectations']['How well do these results meet your expectations?']);
+      $other_feedback = !empty($data['other_feedback']);
+
+      if (!$other_feedback && !$expectations && !$relevance) {
+        $message = '<em>Please provide at least one response.</em>';
+        $errors = [
+          'all_items' => $message,
+        ];
+      }
+    }
     if (!empty($errors)) {
       // Delete any created attachments on invalid submissions.
       if ($fileAttachmentsOnSubmission && $fileEntities) {
@@ -210,6 +272,107 @@ class WebformSubmissionResource extends ResourceBase {
   }
 
   /**
+   * Validates that the submitted reCAPTCHA ( google ) is correct.
+   *
+   * @param string $captcha
+   *   The submitted captcha value.
+   *
+   * @return array
+   *   Returns an array of errors, empty if the captcha passes.
+   *
+   *   See the function in the recaptcha.module which this is based off of (but
+   *   that one didn't work when called directly, failed to find the captcha
+   *   value).
+   */
+  protected function validateCaptcha(string $captcha) {
+    $errors = [];
+
+    $this->logger->info("validateCaptcha -- captcha: %captcha%", ['%captcha%' => $captcha]);
+
+    $config = \Drupal::config('recaptcha.settings');
+    $recaptcha_secret_key = $config->get('secret_key');
+
+    // Configuration to disable recaptcha checking to help with debugging.
+    $bypass = $config->get('bypass');
+    if ($bypass == 'yes') {
+      return [];
+    }
+
+    if (empty($captcha) || empty($recaptcha_secret_key)) {
+      $this->logger->info("validateCaptcha: response or key is empty - key: %key% captcha: %captcha%",
+        [
+          '%key%' => $recaptcha_secret_key,
+          '%captcha' => $captcha,
+        ]
+      );
+      return ["captcha" => "Empty Captcha"];
+    }
+
+    // Use Drupal::httpClient() to circumvent all issues with the Google
+    // library.
+    $drupal8post = \Drupal::service('recaptcha.drupal8post');
+    $recaptcha = new ReCaptcha($recaptcha_secret_key, $drupal8post);
+
+    // Ensures the hostname matches. Required if "Domain Name Validation" is
+    // disabled for credentials.
+    if ($config->get('verify_hostname')) {
+      $recaptcha->setExpectedHostname(\Drupal::request()->getHost());
+    }
+
+    $resp = $recaptcha->verify(
+      $captcha,
+      \Drupal::request()->getClientIp()
+    );
+
+    if ($resp->isSuccess()) {
+      // Verified!
+      $this->logger->info("validateCaptcha: captcha passed.");
+      return [];
+    }
+    else {
+      // Error code reference,
+      // https://developers.google.com/recaptcha/docs/verify
+      $error_codes = [
+        'action-mismatch' => t('Expected action did not match.'),
+        'apk_package_name-mismatch' => t('Expected APK package name did not match.'),
+        'bad-response' => t('Did not receive a 200 from the service.'),
+        'bad-request' => t('The request is invalid or malformed.'),
+        'connection-failed' => t('Could not connect to service.'),
+        'invalid-input-response' => t('The response parameter is invalid or malformed.'),
+        'invalid-input-secret' => t('The secret parameter is invalid or malformed.'),
+        'invalid-json' => t('The json response is invalid or malformed.'),
+        'missing-input-response' => t('The response parameter is missing.'),
+        'missing-input-secret' => t('The secret parameter is missing.'),
+        'hostname-mismatch' => t('Expected hostname did not match.'),
+      ];
+      $info_codes = [
+        'challenge-timeout' => t('Challenge timeout.'),
+        'score-threshold-not-met' => t('Score threshold not met.'),
+        'timeout-or-duplicate' => t('The challenge response timed out or was already verified.'),
+        'unknown-error' => t('Not a success, but no error codes received!'),
+      ];
+      foreach ($resp->getErrorCodes() as $code) {
+        if (isset($info_codes[$code])) {
+          $this->logger->info("FOIA API validateCaptcha -- info code: %info%", ['%info%' => $info_codes[$code]]);
+        }
+        else {
+          if (!isset($error_codes[$code])) {
+            $code = 'unknown-error';
+          }
+          $this->logger->info("FOIA API validateCaptcha -- error code: %err%", ['%err%' => $error_codes[$code]]);
+          $errors[$code] = $error_codes[$code];
+        }
+      }
+    }
+    $this->logger->error("FOIA API validateCaptcha -- failing Captcha %errors%",
+      [
+        '%errors%' => var_export($errors, TRUE),
+      ]);
+
+    return $errors;
+  }
+
+  /**
    * Logs a submission with HTTP status code, message, and optional component.
    *
    * @param int $statusCode
@@ -219,7 +382,7 @@ class WebformSubmissionResource extends ResourceBase {
    * @param \Drupal\node\NodeInterface|null $agencyComponent
    *   The agency component the webform is being submitted to.
    */
-  protected function logSubmission($statusCode, $message, NodeInterface $agencyComponent = NULL) {
+  protected function logSubmission($statusCode, $message, ?NodeInterface $agencyComponent = NULL) {
     $context = [
       '%status' => $statusCode,
       '%message' => $message,
@@ -434,13 +597,13 @@ class WebformSubmissionResource extends ResourceBase {
       if (isset($element['#max_filesize'])) {
         $maxFileSize = $element['#max_filesize'];
         if (!empty($maxFileSize)) {
-          $maxFileSize = Bytes::toInt("{$maxFileSize}MB");
+          $maxFileSize = Bytes::toNumber("{$maxFileSize}MB");
         }
       }
       if (empty($maxFileSize)) {
         $maxFileSize = \Drupal::config('webform.settings')->get('file.default_max_filesize');
         if (!empty($maxFileSize)) {
-          $maxFileSize = Bytes::toInt($maxFileSize);
+          $maxFileSize = Bytes::toNumber($maxFileSize);
         }
       }
       if (empty($maxFileSize)) {
@@ -448,14 +611,17 @@ class WebformSubmissionResource extends ResourceBase {
       }
 
       $fileExtensions = $element['#file_extensions'] ?? $defaultProperties['file_extensions'];
-      $validators['file_validate_size'] = [$maxFileSize];
-      $validators['file_validate_extensions'] = [$fileExtensions];
+      $validators = [
+        'FileExtension' => ['extensions' =>  $fileExtensions],
+        'FileSizeLimit' => ['fileLimit' => $maxFileSize],
+      ];
+      $file_validator = \Drupal::service('file.validator');
       /** @var \Drupal\file_entity\FileEntityInterface $file */
       foreach ($files as $file) {
         $fileSizes[] = $file->getSize();
-        $validationErrors = file_validate($file, $validators);
-        if (!empty($validationErrors)) {
-          $errors[$fieldName][] = $validationErrors;
+        $validationErrors = $file_validator->validate($file, $validators);
+        foreach ($validationErrors as $validationError) {
+          $errors[$fieldName][] = $validationError->getMessage();
         }
       }
     }
@@ -519,7 +685,7 @@ class WebformSubmissionResource extends ResourceBase {
     if ($readable) {
       return $maxUploadSize;
     }
-    return Bytes::toInt("{$maxUploadSize}MB");
+    return Bytes::toNumber("{$maxUploadSize}MB");
   }
 
   /**
@@ -593,7 +759,6 @@ class WebformSubmissionResource extends ResourceBase {
         $this->fileUsage->add($file, 'webform', 'webform_submission', $webformSubmission->id());
       }
     }
-
   }
 
 }

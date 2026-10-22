@@ -5,3 +5,8 @@ foia_change_report_agency:
   dependencies:
     - core/jquery
     - core/drupalSettings
+
+foia_form_display_new_reports:
+  css:
+    theme:
+      css/form-display-new-reports.css: {}

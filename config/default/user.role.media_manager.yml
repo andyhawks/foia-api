@@ -3,7 +3,7 @@ langcode: en
 status: true
 dependencies:
   module:
-    - entity_browser
+    - file
     - file_entity
     - media
 _core:
@@ -14,7 +14,7 @@ weight: 6
 is_admin: null
 permissions:
   - 'access media overview'
-  - 'access media_browser entity browser pages'
   - 'administer media'
   - 'administer media types'
+  - 'delete own files'
   - 'view files'

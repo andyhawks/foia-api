@@ -1,22 +1,76 @@
+# This configuration is set up to work with the ddev local environment.
+# See example.local.yml for an example of how to override this configuration.
 default:
   suites:
     default:
+      contexts:
+        - Drupal\FeatureContext
+        - Drupal\DrupalExtension\Context\DrupalContext
+        - Drupal\DrupalExtension\Context\MinkContext
+        - Drupal\DrupalExtension\Context\MessageContext
+        - Drupal\DrupalExtension\Context\DrushContext
+        - Drupal\DrupalExtension\Context\ConfigContext
+        - Imbo\BehatApiExtension\Context\ApiContext
+        - DrevOps\BehatScreenshotExtension\Context\ScreenshotContext
       paths:
-        - %paths.base%/features
+        - "%paths.base%/features"
   extensions:
-    Behat\MinkExtension:
-      default_session: goutte
+    Drupal\MinkExtension:
+      default_session: browserkit_http
+      browser_name: chrome
       javascript_session: selenium2
-      goutte: ~
       files_path: "%paths.base%/media"
+      base_url: https://foia-api.ddev.site
+      selenium2:
+        wd_host: http://selenium-chrome:4444/wd/hub
+        capabilities:
+          chrome:
+            switches:
+              - "--ignore-certificate-errors"
+              - "--disable-gpu"
+              - "--headless"
+              - "--no-sandbox"
+              - "--disable-dev-shm-usage"
+      sessions:
+        browserkit_http:
+          browserkit_http: ~
     Drupal\DrupalExtension:
+      drupal:
+        drupal_root: /var/www/html/docroot
+      drush:
+        alias: '@self'
       blackbox: ~
       api_driver: "drupal"
+      region_map:
+        content: "#content"
+        footer: "#footer"
+        navigation: "#nav-header"
+        left header: "#header-left"
+        right header: "#header-right"
+        right sidebar: "#aside-region"
+      subcontexts:
+        autoload: 0
+      selectors:
+        message_selector: '.messages'
+        error_message_selector: '.messages--error'
+        success_message_selector: '.messages--status'
+        warning_message_selector: '.messages--warning'
     jarnaiz\JUnitFormatter\JUnitFormatterExtension:
         filename: report.xml
-        outputDir: %paths.base%/build/tests
-    Bex\Behat\ScreenshotExtension:
-      screenshot_taking_mode: failed_steps
-      image_drivers:
-        local:
-          screenshot_directory: /tmp
+        outputDir: "%paths.base%/build/tests"
+    DrevOps\BehatScreenshotExtension:
+      dir: '%paths.base%/screenshots'
+      fail: true
+      fail_prefix: 'failed_'
+      purge: true
+      # BEHAT_SCREENSHOT_DIR
+#    Bex\Behat\ScreenshotExtension:
+#      screenshot_taking_mode: failed_steps
+#      image_drivers:
+#        local:
+#          screenshot_directory: /var/www/html/tests/behat/screenshots
+    Imbo\BehatApiExtension:
+      apiClient:
+        base_uri: https://foia-api.ddev.site
+        timeout: 5.0
+        verify: false

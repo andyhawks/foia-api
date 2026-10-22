@@ -6,14 +6,16 @@ use Drupal\Component\Serialization\Json;
 use Drupal\file_entity\Entity\FileEntity;
 use Drupal\file_entity\Entity\FileType;
 use Drupal\foia_request\Entity\FoiaRequest;
+use Drupal\foia_webform\AgencyLookupService;
 use Drupal\foia_webform\FoiaSubmissionServiceApi;
 use Drupal\foia_webform\FoiaSubmissionServiceInterface;
 use Drupal\KernelTests\KernelTestBase;
+use Drupal\node\Entity\Node;
+use Drupal\node\Entity\NodeType;
+use Drupal\taxonomy\Entity\Term;
 use Drupal\taxonomy\Entity\Vocabulary;
 use Drupal\webform\Entity\Webform;
 use Drupal\webform\Entity\WebformSubmission;
-use Drupal\node\Entity\NodeType;
-use Drupal\node\Entity\Node;
 use Drupal\webform\WebformInterface;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\RequestException;
@@ -21,8 +23,6 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Request;
 use GuzzleHttp\Psr7\Response;
-use Drupal\foia_webform\AgencyLookupService;
-use Drupal\taxonomy\Entity\Term;
 
 /**
  * Class FoiaSubmissionServiceApiTest.
@@ -234,6 +234,7 @@ class FoiaSubmissionServiceApiTest extends KernelTestBase {
     $webformSubmission->save();
     $query = \Drupal::entityTypeManager()->getStorage('webform_submission')->getQuery();
     $query->condition('webform_id', $webform->id());
+    $query->accessCheck();
     foreach (\Drupal::entityTypeManager()->getStorage('webform_submission')->loadMultiple($query->execute()) as $submission) {
       $webformSubmission = $submission;
     }
@@ -306,6 +307,7 @@ class FoiaSubmissionServiceApiTest extends KernelTestBase {
 
     $query = \Drupal::entityTypeManager()->getStorage('webform_submission')->getQuery();
     $query->condition('webform_id', $webform->id());
+    $query->accessCheck();
     foreach (\Drupal::entityTypeManager()->getStorage('webform_submission')->loadMultiple($query->execute()) as $submission) {
       $webformSubmission = $submission;
     }

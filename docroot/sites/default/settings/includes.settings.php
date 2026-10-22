@@ -5,20 +5,20 @@
  * Includes settings files on Acquia.
  */
 
-use Acquia\Blt\Robo\Common\EnvironmentDetector;
-
 /**
  * @file
  * Site-specific settings.php code for the National FOIA Portal.
  */
 
-if (EnvironmentDetector::isAhEnv()) {
-  $ah_group = EnvironmentDetector::getAhGroup();
-  $ah_env = EnvironmentDetector::getAhEnv();
-  if ($ah_env == 'ide') {
-    $config['simplesamlphp_auth.settings']['activate'] = false;
+if (isset($_ENV['AH_SITE_ENVIRONMENT'])) {
+  $ah_group = $_ENV['AH_SITE_GROUP'];
+  $ah_env = $_ENV['AH_SITE_ENVIRONMENT'];
+  if (file_exists('/var/www/site-php/foia/foia-settings.inc')) {
+    require '/var/www/site-php/foia/foia-settings.inc';
   }
-  else {
+  // Fix the location of the config files.
+  $settings['config_sync_directory'] = '../config/default';
+  if ($ah_env != 'ide') {
     $additionalSettingsFiles = [
       '/mnt/gfs/home/' . $ah_group . '/' . $ah_env . '/secrets.settings.php',
     ];
@@ -34,4 +34,40 @@ if (EnvironmentDetector::isAhEnv()) {
       ac_protect_this_site();
     }
   }
+
+  switch ($ah_env) {
+    case 'dev':
+      $config['samlauth.authentication']['sp_entity_id'] = 'doj_foia_api_dev';
+      $config['samlauth.authentication']['idp_single_sign_on_service'] = 'https://int.fedhub.hhs.gov/ABaaS/idp';
+      $config['samlauth.authentication']['idp_entity_id'] = 'https://int.fedhub.hhs.gov/ABaaS/idp';
+      break;
+
+    case 'test':
+      $config['samlauth.authentication']['sp_entity_id'] = 'doj_foia_api_test';
+      $config['samlauth.authentication']['idp_single_sign_on_service'] = 'https://int.fedhub.hhs.gov/ABaaS/idp';
+      $config['samlauth.authentication']['idp_entity_id'] = 'https://int.fedhub.hhs.gov/ABaaS/idp';
+      break;
+
+    case 'uat':
+      $config['samlauth.authentication']['sp_entity_id'] = 'doj_foia_api_uat';
+      $config['samlauth.authentication']['idp_single_sign_on_service'] = 'https://int.fedhub.hhs.gov/ABaaS/idp';
+      $config['samlauth.authentication']['idp_entity_id'] = 'https://int.fedhub.hhs.gov/ABaaS/idp';
+      break;
+
+    case 'prod':
+      $config['samlauth.authentication']['sp_entity_id'] = 'doj_foia_api_prod';
+      $config['samlauth.authentication']['idp_single_sign_on_service'] = 'https://fedhub.hhs.gov/ABaaS/idp';
+      $config['samlauth.authentication']['idp_entity_id'] = 'https://fedhub.hhs.gov/ABaaS/idp';
+      break;
+
+  }
+
+  $config['samlauth.authentication']['sp_x509_certificate'] = 'file:/var/www/html/foia.' . $ah_env . '/acquia-files/saml/samlauth_key.pub';
+  $config['samlauth.authentication']['sp_private_key'] = 'file:/var/www/html/foia.' . $ah_env . '/acquia-files/saml/samlauth_key';
+  $config['samlauth.authentication']['idp_certs'][0] = 'file:/var/www/html/foia.' . $ah_env . '/acquia-files/saml/fedhub_key.pub';
+}
+
+// Keep local private uploads outside the web root.
+if (getenv('IS_DDEV_PROJECT') === 'true' && empty($settings['file_private_path'])) {
+  $settings['file_private_path'] = DRUPAL_ROOT . '/../files-private';
 }

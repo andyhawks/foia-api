@@ -13,8 +13,8 @@ archive: false
 id: va_oashra_form
 title: 'VA-OASHRA Form'
 description: ''
-category: ''
-elements: |
+categories: {  }
+elements: |-
   name_first:
     '#type': textfield
     '#title': 'First name'
@@ -66,9 +66,9 @@ elements: |
       other: 'All other requester'
   request_description:
     '#type': textarea
-    '#maxlength': 10000
     '#title': 'Your request'
-    '#help': 'A brief and clear description of the information you''d like to receive. Please be as specific as possible.'
+    '#help': 'A brief and clear description of the information you&#39;d like to receive. Please be as specific as possible.&nbsp; <strong>ATTENTION:&nbsp;&nbsp;We&nbsp;do not&nbsp;create or store any&nbsp;personnel records&nbsp;for VA.&nbsp;Please consult the relevant regional operational Human Resources office for personnel records inquiries.</strong>'
+    '#maxlength': 10000
     '#required': true
   fee_waiver:
     '#type': select
@@ -148,6 +148,9 @@ settings:
   form_access_denied_message: ''
   form_access_denied_attributes: {  }
   form_file_limit: ''
+  form_attributes: {  }
+  form_method: ''
+  form_action: ''
   share: false
   share_node: false
   share_theme_name: ''
@@ -191,6 +194,8 @@ settings:
   wizard_toggle: false
   wizard_toggle_show_label: ''
   wizard_toggle_hide_label: ''
+  wizard_page_type: container
+  wizard_page_title_tag: h2
   preview: 0
   preview_label: ''
   preview_title: ''

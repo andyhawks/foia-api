@@ -7,24 +7,22 @@ dependencies:
     - node.type.agency_component
     - node.type.annual_foia_report_data
     - node.type.quarterly_foia_report_data
+    - node.type.raw_data_to_report
     - workflows.workflow.annual_report_workflow
     - workflows.workflow.quarterly_report_workflow
   module:
     - content_moderation
     - field_permissions
+    - file
     - file_entity
     - filter
     - foia_personnel
     - form_mode_manager
-    - lightning_core
     - migrate_tools
     - node
     - node_to_docx
     - system
     - view_unpublished
-third_party_settings:
-  lightning_core:
-    description: ''
 id: agency_manager
 label: 'Agency Manager'
 weight: 11
@@ -36,20 +34,27 @@ permissions:
   - 'create field_request_submission_form'
   - 'create field_submission_api'
   - 'create field_submission_api_secret'
+  - 'create field_submission_email'
   - 'create quarterly_foia_report_data content'
+  - 'create raw_data_to_report content'
   - 'delete foia personnel entities'
+  - 'delete own files'
   - 'download own document files'
   - 'edit any annual_foia_report_data content'
   - 'edit any quarterly_foia_report_data content'
+  - 'edit any raw_data_to_report content'
   - 'edit field_request_submission_form'
   - 'edit field_submission_api'
   - 'edit field_submission_api_secret'
+  - 'edit field_submission_email'
   - 'edit foia personnel entities'
   - 'edit own annual_foia_report_data content'
   - 'edit own field_request_submission_form'
   - 'edit own field_submission_api'
   - 'edit own field_submission_api_secret'
+  - 'edit own field_submission_email'
   - 'edit own quarterly_foia_report_data content'
+  - 'edit own raw_data_to_report content'
   - 'generate docx using node to docx: annual_foia_report_data'
   - 'generate docx using node to docx: quarterly_foia_report_data'
   - 'revert all revisions'
@@ -104,6 +109,7 @@ permissions:
   - 'view field_expedited_highest_days'
   - 'view field_expedited_lowest_days'
   - 'view field_expedited_median_days'
+  - 'view field_request_data_xml'
   - 'view field_request_data_year'
   - 'view field_request_submission_form'
   - 'view field_simple_average_days'
@@ -112,10 +118,12 @@ permissions:
   - 'view field_simple_median_days'
   - 'view field_submission_api'
   - 'view field_submission_api_secret'
+  - 'view field_submission_email'
   - 'view files'
   - 'view own field_request_submission_form'
   - 'view own field_submission_api'
   - 'view own field_submission_api_secret'
+  - 'view own field_submission_email'
   - 'view own unpublished content'
   - 'view quarterly_foia_report_data revisions'
   - 'view the administration theme'

@@ -117,7 +117,10 @@ class FoiaSubmissionServiceApi implements FoiaSubmissionServiceInterface {
       $this->log('error', $error['message']);
       return FALSE;
     }
-    return $this->submitToComponentEndpoint($componentEndpoint, $valuesToSubmit);
+    $response = $this->submitToComponentEndpoint($componentEndpoint, $valuesToSubmit);
+    $successMessage = 'Successful API submission -- Component Nid: ' . $this->agencyComponent->id() . ' Request Id: ' . $foiaRequest->id() . '.';
+    \Drupal::logger('foia_webform')->error($successMessage);
+    return $response;
   }
 
   /**
@@ -143,6 +146,10 @@ class FoiaSubmissionServiceApi implements FoiaSubmissionServiceInterface {
     $apiVersion = ['version' => FoiaSubmissionServiceInterface::VERSION];
     $foiaRequestId = ['request_id' => $foiaRequest->id()];
     $submissionValues = array_merge($apiVersion, $agencyInfo, $foiaRequestId, $formValues);
+
+    if (!empty($submissionValues['captcha'])) {
+      unset($submissionValues['captcha']);
+    }
 
     return $submissionValues;
   }
@@ -224,7 +231,8 @@ class FoiaSubmissionServiceApi implements FoiaSubmissionServiceInterface {
       if ($e->hasResponse()) {
         $response = $e->getResponse();
         $responseCode = $response->getStatusCode();
-        $responseBody = Json::decode($response->getBody());
+        $rawResponseBody = $response->getBody();
+        $responseBody = Json::decode($rawResponseBody);
         $context = [
           '@http_code' => $responseCode,
         ];
@@ -236,6 +244,13 @@ class FoiaSubmissionServiceApi implements FoiaSubmissionServiceInterface {
           ];
           $this->addSubmissionError($error);
           $this->log('error', "{$httpCodeMessagePrefix} {$error['message']}", $context);
+          $context['@body'] = $rawResponseBody;
+          if (!empty($rawResponseBody)) {
+            $this->log('error', "{$httpCodeMessagePrefix} raw reponse body = [@body]", $context);
+          }
+          else {
+            $this->log('error', "Response body from component was empty.");
+          }
           return FALSE;
         }
         if (isset($responseBody['code'])) {
@@ -320,7 +335,8 @@ class FoiaSubmissionServiceApi implements FoiaSubmissionServiceInterface {
    *   Otherwise an empty string.
    */
   protected function parseAgencyResponse(Response $response) {
-    $responseBody = Json::decode($response->getBody());
+    $rawResponseBody = $response->getBody();
+    $responseBody = Json::decode($rawResponseBody);
     $responseCode = $response->getStatusCode();
     // Not a json-formatted response like we expected.
     if (empty($responseBody)) {
@@ -330,6 +346,16 @@ class FoiaSubmissionServiceApi implements FoiaSubmissionServiceInterface {
       ];
       $this->addSubmissionError($error);
       $this->log('warning', $error['message']);
+      $context = [
+        '@http_code' => $responseCode,
+        '@body' => $rawResponseBody,
+      ];
+      if (!empty($rawResponseBody)) {
+        $this->log('error', "{$httpCodeMessagePrefix} raw reponse body = [@body]", $context);
+      }
+      else {
+        $this->log('error', "Response body from component was empty.");
+      }
       return FALSE;
     }
     $id = $responseBody['id'] ?? '';

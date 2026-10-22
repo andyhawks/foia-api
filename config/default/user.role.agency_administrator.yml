@@ -14,13 +14,13 @@ dependencies:
     - content_moderation
     - entity_clone
     - field_permissions
+    - file
     - file_entity
     - filter
     - foia_personnel
     - foia_request
     - foia_webform
     - form_mode_manager
-    - lightning_core
     - masquerade
     - migrate_tools
     - node
@@ -28,15 +28,11 @@ dependencies:
     - paragraphs
     - password_policy
     - roleassign
-    - simplesamlphp_auth
     - system
     - taxonomy
     - toolbar
     - view_unpublished
     - webform
-third_party_settings:
-  lightning_core:
-    description: ''
 id: agency_administrator
 label: 'Agency Administrator'
 weight: 11
@@ -53,18 +49,21 @@ permissions:
   - 'administer taxonomy'
   - 'administer users'
   - 'assign roles'
-  - 'change saml authentication setting'
   - 'clone foia_personnel entity'
   - 'clone node entity'
   - 'clone paragraph entity'
   - 'create agency_component content'
   - 'create annual_foia_report_data content'
+  - 'create field_interop_exception'
+  - 'create field_interop_planned_method'
   - 'create field_is_centralized'
+  - 'create field_num_requests'
   - 'create field_rep_exp'
   - 'create field_rep_start'
   - 'create field_request_submission_form'
   - 'create field_submission_api'
   - 'create field_submission_api_secret'
+  - 'create field_submission_email'
   - 'create quarterly_foia_report_data content'
   - 'create webform'
   - 'delete any agency_component content'
@@ -74,6 +73,7 @@ permissions:
   - 'delete foia personnel entities'
   - 'delete own agency_component content'
   - 'delete own annual_foia_report_data content'
+  - 'delete own files'
   - 'delete own quarterly_foia_report_data content'
   - 'delete own webform'
   - 'delete terms in agency'
@@ -81,27 +81,50 @@ permissions:
   - 'edit any annual_foia_report_data content'
   - 'edit any quarterly_foia_report_data content'
   - 'edit any webform'
+  - 'edit field_complex_average_days'
+  - 'edit field_complex_highest_days'
+  - 'edit field_complex_lowest_days'
+  - 'edit field_complex_median_days'
+  - 'edit field_expedited_average_days'
+  - 'edit field_expedited_highest_days'
+  - 'edit field_expedited_lowest_days'
+  - 'edit field_expedited_median_days'
+  - 'edit field_interop_exception'
+  - 'edit field_interop_planned_method'
   - 'edit field_is_centralized'
+  - 'edit field_num_requests'
   - 'edit field_rep_exp'
   - 'edit field_rep_start'
+  - 'edit field_request_data_year'
   - 'edit field_request_submission_form'
+  - 'edit field_require_manual_processing'
+  - 'edit field_simple_average_days'
+  - 'edit field_simple_highest_days'
+  - 'edit field_simple_lowest_days'
+  - 'edit field_simple_median_days'
   - 'edit field_submission_api'
   - 'edit field_submission_api_secret'
+  - 'edit field_submission_email'
   - 'edit foia personnel entities'
   - 'edit own agency_component content'
   - 'edit own annual_foia_report_data content'
+  - 'edit own field_interop_exception'
+  - 'edit own field_interop_planned_method'
   - 'edit own field_is_centralized'
+  - 'edit own field_num_requests'
   - 'edit own field_rep_exp'
   - 'edit own field_rep_start'
   - 'edit own field_request_submission_form'
   - 'edit own field_submission_api'
   - 'edit own field_submission_api_secret'
+  - 'edit own field_submission_email'
   - 'edit own quarterly_foia_report_data content'
   - 'edit terms in agency'
   - 'generate docx using node to docx: annual_foia_report_data'
   - 'generate docx using node to docx: quarterly_foia_report_data'
   - 'manage password reset'
   - 'masquerade as any user'
+  - 'rebuild node access permissions'
   - 'revert agency_component revisions'
   - 'revert all foia personnel revisions'
   - 'revert all revisions'
@@ -171,23 +194,33 @@ permissions:
   - 'view field_expedited_highest_days'
   - 'view field_expedited_lowest_days'
   - 'view field_expedited_median_days'
+  - 'view field_interop_exception'
+  - 'view field_interop_planned_method'
+  - 'view field_num_requests'
   - 'view field_rep_exp'
   - 'view field_rep_start'
+  - 'view field_request_data_xml'
   - 'view field_request_data_year'
   - 'view field_request_submission_form'
+  - 'view field_require_manual_processing'
   - 'view field_simple_average_days'
   - 'view field_simple_highest_days'
   - 'view field_simple_lowest_days'
   - 'view field_simple_median_days'
   - 'view field_submission_api'
   - 'view field_submission_api_secret'
+  - 'view field_submission_email'
   - 'view files'
   - 'view foia request entities'
+  - 'view own field_interop_exception'
+  - 'view own field_interop_planned_method'
+  - 'view own field_num_requests'
   - 'view own field_rep_exp'
   - 'view own field_rep_start'
   - 'view own field_request_submission_form'
   - 'view own field_submission_api'
   - 'view own field_submission_api_secret'
+  - 'view own field_submission_email'
   - 'view own unpublished content'
   - 'view own webform submission'
   - 'view private files'

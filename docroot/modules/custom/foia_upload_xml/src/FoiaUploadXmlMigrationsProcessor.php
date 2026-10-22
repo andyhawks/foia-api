@@ -2,11 +2,11 @@
 
 namespace Drupal\foia_upload_xml;
 
-use Drupal\file\FileInterface;
-use Drupal\migrate\MigrateMessage;
+use Drupal\Component\Utility\NestedArray;
 use Drupal\Core\Cache\NullBackend;
 use Drupal\Core\Session\AccountInterface;
-use Drupal\Component\Utility\NestedArray;
+use Drupal\file\FileInterface;
+use Drupal\migrate\MigrateMessage;
 use Drupal\migrate\MigrateMessageInterface;
 use Drupal\migrate\Plugin\MigrationPluginManager;
 
@@ -36,7 +36,7 @@ class FoiaUploadXmlMigrationsProcessor {
    *
    * @var array
    */
-  protected $sourceOverrides;
+  protected $sourceOverrides = [];
 
   /**
    * FoiaUploadXmlMigrationsProcessor constructor.
@@ -48,7 +48,6 @@ class FoiaUploadXmlMigrationsProcessor {
     $this->migrationPluginManager = $migrationPluginManager;
     $this->migrationPluginManager->setCacheBackend(new NullBackend('discovery'), 'migration_plugins', ['migration_plugins']);
     $this->migrateMessage = new MigrateMessage();
-    $this->sourceOverrides = [];
   }
 
   /**

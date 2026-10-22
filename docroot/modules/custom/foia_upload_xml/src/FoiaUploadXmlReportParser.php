@@ -2,8 +2,8 @@
 
 namespace Drupal\foia_upload_xml;
 
-use Drupal\file\FileInterface;
 use Drupal\Core\Entity\EntityTypeManager;
+use Drupal\file\FileInterface;
 use Drupal\migrate_plus\DataParserPluginManager;
 
 /**
@@ -112,6 +112,7 @@ class FoiaUploadXmlReportParser {
 
     $term_query = $this->entityTypeManager->getStorage('taxonomy_term')
       ->getQuery()
+      ->accessCheck(TRUE)
       ->condition('vid', 'agency')
       ->condition('field_agency_abbreviation', $agency_abbreviation);
 

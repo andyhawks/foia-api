@@ -2,8 +2,8 @@
 
 namespace Drupal\foia_file\Commands;
 
-use Drush\Commands\DrushCommands;
 use Drupal\file\Entity\File;
+use Drush\Commands\DrushCommands;
 
 /**
  * A Drush commandfile.
@@ -35,8 +35,11 @@ class FoiaFileCommands extends DrushCommands {
       return FALSE;
     }
 
-    $scan_options = '-r --remove --no-summary';
-    $scan_command = "${path_to_executable} ${scan_options} ${path_to_webform_attachments}";
+    $scan_options = '--remove --no-summary --file-list=/tmp/foia-scan-files-$$.txt';
+    $scan_files_cmd = 'find ' . $path_to_webform_attachments . ' -type f > /tmp/foia-scan-files-$$.txt';
+    $rm_scan_files_cmd = 'rm /tmp/foia-scan-files-$$.txt';
+    // phpcs:ignore
+    $scan_command = $scan_files_cmd . ' ; ' . $path_to_executable . ' ' . $scan_options . ' ; ' . $rm_scan_files_cmd;
     $startTime = microtime(TRUE);
     $scanOutput = shell_exec($scan_command);
 
@@ -94,6 +97,7 @@ class FoiaFileCommands extends DrushCommands {
 
       // Determine file entity id based upon file path & name.
       $query = \Drupal::entityQuery('file')
+        ->accessCheck(TRUE)
         ->condition('uri', "private://webform/{$relativeFileName}");
       $fids = $query->execute();
       if ($fids) {

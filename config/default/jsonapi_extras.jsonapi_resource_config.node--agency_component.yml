@@ -4,6 +4,11 @@ status: true
 dependencies:
   config:
     - node.type.agency_component
+  module:
+    - jsonapi_defaults
+third_party_settings:
+  jsonapi_defaults:
+    page_limit: 50
 id: node--agency_component
 disabled: false
 path: agency_components
@@ -123,30 +128,6 @@ resourceFields:
     publicName: moderation_state
     enhancer:
       id: ''
-  scheduled_transition_date:
-    disabled: true
-    fieldName: scheduled_transition_date
-    publicName: scheduled_transition_date
-    enhancer:
-      id: ''
-  scheduled_transition_state:
-    disabled: true
-    fieldName: scheduled_transition_state
-    publicName: scheduled_transition_state
-    enhancer:
-      id: ''
-  scheduled_publication:
-    disabled: true
-    fieldName: scheduled_publication
-    publicName: scheduled_publication
-    enhancer:
-      id: ''
-  scheduled_moderation_state:
-    disabled: true
-    fieldName: scheduled_moderation_state
-    publicName: scheduled_moderation_state
-    enhancer:
-      id: ''
   metatag:
     disabled: true
     fieldName: metatag
@@ -187,6 +168,12 @@ resourceFields:
     disabled: false
     fieldName: field_agency_comp_telephone
     publicName: telephone
+    enhancer:
+      id: ''
+  field_commonly_requested_records:
+    disabled: false
+    fieldName: field_commonly_requested_records
+    publicName: commonly_requested_records
     enhancer:
       id: ''
   field_complex_average_days:
@@ -249,6 +236,18 @@ resourceFields:
     publicName: foia_officers
     enhancer:
       id: ''
+  field_interop_exception:
+    disabled: true
+    fieldName: field_interop_exception
+    publicName: field_interop_exception
+    enhancer:
+      id: ''
+  field_interop_planned_method:
+    disabled: true
+    fieldName: field_interop_planned_method
+    publicName: field_interop_planned_method
+    enhancer:
+      id: ''
   field_is_centralized:
     disabled: false
     fieldName: field_is_centralized
@@ -259,6 +258,12 @@ resourceFields:
     disabled: false
     fieldName: field_misc
     publicName: field_misc
+    enhancer:
+      id: ''
+  field_num_requests:
+    disabled: false
+    fieldName: field_num_requests
+    publicName: num_requests
     enhancer:
       id: ''
   field_portal_submission_format:
@@ -307,6 +312,12 @@ resourceFields:
     disabled: false
     fieldName: field_request_submission_form
     publicName: request_form
+    enhancer:
+      id: ''
+  field_require_manual_processing:
+    disabled: false
+    fieldName: field_require_manual_processing
+    publicName: field_require_manual_processing
     enhancer:
       id: ''
   field_service_centers:

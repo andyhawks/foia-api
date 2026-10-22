@@ -4,8 +4,8 @@ namespace Drupal\foia_upload_xml\Plugin\migrate\process;
 
 use Drupal\Core\Entity\EntityTypeManagerInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
-use Drupal\migrate\ProcessPluginBase;
 use Drupal\migrate\MigrateExecutableInterface;
+use Drupal\migrate\ProcessPluginBase;
 use Drupal\migrate\Row;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -85,7 +85,9 @@ class ComponentLookup extends ProcessPluginBase implements ContainerFactoryPlugi
    */
   protected function query($agency, $component) {
     // First find the Agency taxonomy term corresponding to $agency.
-    $taxonomy_query = $this->entityTypeManager->getStorage('taxonomy_term')->getQuery()
+    $taxonomy_query = $this->entityTypeManager->getStorage('taxonomy_term')
+      ->getQuery()
+      ->accessCheck(TRUE)
       ->condition('vid', 'agency')
       ->condition('field_agency_abbreviation', $agency);
     $tids = $taxonomy_query->execute();
@@ -94,7 +96,9 @@ class ComponentLookup extends ProcessPluginBase implements ContainerFactoryPlugi
       return NULL;
     }
 
-    $node_query = $this->entityTypeManager->getStorage('node')->getQuery()
+    $node_query = $this->entityTypeManager->getStorage('node')
+      ->getQuery()
+      ->accessCheck(TRUE)
       ->condition('type', 'agency_component')
       ->condition('field_agency', reset($tids))
       ->condition('field_agency_comp_abbreviation', $component);

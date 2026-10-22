@@ -3,12 +3,10 @@ langcode: en
 status: true
 dependencies:
   module:
-    - lightning_core
-third_party_settings:
-  lightning_core:
-    description: ''
+    - file
 id: non_sso
 label: Non-SSO
 weight: 12
 is_admin: null
-permissions: {  }
+permissions:
+  - 'delete own files'

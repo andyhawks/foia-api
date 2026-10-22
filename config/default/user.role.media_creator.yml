@@ -9,7 +9,7 @@ dependencies:
     - media.type.tweet
     - media.type.video
   module:
-    - entity_browser
+    - file
     - file_entity
     - media
 _core:
@@ -20,7 +20,6 @@ weight: 5
 is_admin: null
 permissions:
   - 'access media overview'
-  - 'access media_browser entity browser pages'
   - 'create document media'
   - 'create image media'
   - 'create instagram media'
@@ -29,6 +28,7 @@ permissions:
   - 'create video media'
   - 'delete media'
   - 'delete own document media'
+  - 'delete own files'
   - 'delete own image media'
   - 'delete own instagram media'
   - 'delete own tweet media'

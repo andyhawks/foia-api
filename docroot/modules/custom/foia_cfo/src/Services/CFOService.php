@@ -110,6 +110,11 @@ class CFOService {
         $return_item['item_body'] = $item->get('field_body')->getValue()[0]['value'];
       }
 
+      // Active.
+      if ($item->hasField('field_cfo_group_active')) {
+        $return_item['item_active'] = (boolean) $item->get('field_cfo_group_active')->getValue()[0]['value'];
+      }
+
       // File Attachments.
       if ($item->hasField('field_attachments')) {
         $attachments = $item->get('field_attachments');
@@ -178,6 +183,7 @@ class CFOService {
     $meeting_query = \Drupal::service('renderer')->executeInRenderContext($context_meeting, function () use ($meeting_date_value) {
       // Query for the meeting - match just date (not time) hence "like".
       $meeting_query = \Drupal::entityQuery('node')
+        ->accessCheck(TRUE)
         ->condition('type', 'cfo_meeting')
         ->condition('status', 1)
         ->condition('field_meeting_date', $meeting_date_value, 'LIKE')
@@ -215,6 +221,7 @@ class CFOService {
     $render_query = \Drupal::service('renderer')->executeInRenderContext($render_context, function () use ($slug, $content_type) {
       // Query for the meeting - match just date (not time) hence "like".
       $query = \Drupal::entityQuery('node')
+        ->accessCheck(TRUE)
         ->condition('type', $content_type)
         ->condition('status', 1)
         ->condition('field_cfo_slug', $slug)
@@ -260,6 +267,9 @@ class CFOService {
       // File.
       if ($item->hasField('field_attachment')) {
         $attachment = $item->get('field_attachment')->getValue();
+        if (empty($attachment)) {
+          continue;
+        }
         $fid = $attachment[0]['target_id'];
         if (empty($fid)) {
           continue;

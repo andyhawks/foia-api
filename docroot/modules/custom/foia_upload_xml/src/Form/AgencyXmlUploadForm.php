@@ -2,14 +2,14 @@
 
 namespace Drupal\foia_upload_xml\Form;
 
-use Drupal\file\FileInterface;
-use Drupal\Core\File\FileSystemInterface;
-use Drupal\foia_upload_xml\ReportUploadValidator;
 use Drupal\Core\Entity\EntityTypeManagerInterface;
+use Drupal\Core\File\FileSystemInterface;
 use Drupal\Core\Form\FormBase;
 use Drupal\Core\Form\FormStateInterface;
-use Symfony\Component\DependencyInjection\ContainerInterface;
+use Drupal\file\FileInterface;
+use Drupal\foia_upload_xml\ReportUploadValidator;
 use Drupal\user\Entity\User;
+use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Class AgencyXmlUploadForm.
@@ -72,9 +72,10 @@ class AgencyXmlUploadForm extends FormBase {
       '#description' => $this->t("Upload your agency's annual report in the standard NIEM-XML format. Use the file extension '.xml'."),
       '#upload_location' => 'temporary://foia-xml',
       '#upload_validators' => [
-        'file_validate_extensions' => ['xml'],
+        'FileExtension' => ['extensions' => 'xml'],
       ],
       '#required' => TRUE,
+      '#file_type' => 'document',
     ];
 
     $form['next_step'] = [
@@ -147,7 +148,8 @@ class AgencyXmlUploadForm extends FormBase {
     $id = $report_data['agency_tid'] ?? 'user_' . $user->id();
     $year = $report_data['report_year'] ?? date('Y');
     $xml_upload_filename = "$directory/report_" . $year . "_" . $id . ".xml";
-    $file = file_move($file, $xml_upload_filename, FileSystemInterface::EXISTS_RENAME);
+    $file_repository = \Drupal::service('file.repository');
+    $file = $file_repository->move($file, $xml_upload_filename, FileSystemInterface::EXISTS_RENAME);
 
     $item = new \stdClass();
     $item->fid = $file->id();
@@ -165,6 +167,8 @@ class AgencyXmlUploadForm extends FormBase {
 
   /**
    * Process an uploaded report file immediately via the batch api.
+   *
+   * Used on the /report/upload page.
    *
    * @param \Drupal\Core\Form\FormStateInterface $form_state
    *   The current form state.
@@ -184,7 +188,8 @@ class AgencyXmlUploadForm extends FormBase {
     // This is fine when the file is being processed immediately.
     $user_agency_nid = $user->get('field_agency')->target_id;
     $xml_upload_filename = "$directory/report_" . date('Y') . "_" . $user_agency_nid . ".xml";
-    $file = file_move($file, $xml_upload_filename, FileSystemInterface::EXISTS_REPLACE);
+    $file_repository = \Drupal::service('file.repository');
+    $file = $file_repository->move($file, $xml_upload_filename, FileSystemInterface::EXISTS_RENAME);
 
     $batch = [
       'title' => $this->t('Importing Annual Report XML Data...'),
@@ -193,7 +198,7 @@ class AgencyXmlUploadForm extends FormBase {
       'progress_message' => $this->t('Imported @current out of @total'),
       'error_message' => $this->t('An error occurred during import'),
       'finished' => 'foia_upload_xml_execute_migration_finished',
-      'file' => drupal_get_path('module', 'foia_upload_xml') . '/foia_upload_xml.batch.inc',
+      'file' => \Drupal::service('extension.list.module')->getPath('foia_upload_xml') . '/foia_upload_xml.batch.inc',
     ];
 
     batch_set($batch);

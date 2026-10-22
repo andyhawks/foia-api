@@ -7,6 +7,7 @@ dependencies:
     - field.field.node.agency_component.field_agency
     - field.field.node.agency_component.field_agency_comp_abbreviation
     - field.field.node.agency_component.field_agency_comp_telephone
+    - field.field.node.agency_component.field_commonly_requested_records
     - field.field.node.agency_component.field_complex_average_days
     - field.field.node.agency_component.field_complex_highest_days
     - field.field.node.agency_component.field_complex_lowest_days
@@ -17,8 +18,11 @@ dependencies:
     - field.field.node.agency_component.field_expedited_lowest_days
     - field.field.node.agency_component.field_expedited_median_days
     - field.field.node.agency_component.field_foia_officers
+    - field.field.node.agency_component.field_interop_exception
+    - field.field.node.agency_component.field_interop_planned_method
     - field.field.node.agency_component.field_is_centralized
     - field.field.node.agency_component.field_misc
+    - field.field.node.agency_component.field_num_requests
     - field.field.node.agency_component.field_portal_submission_format
     - field.field.node.agency_component.field_public_liaisons
     - field.field.node.agency_component.field_reading_rooms
@@ -27,6 +31,7 @@ dependencies:
     - field.field.node.agency_component.field_rep_start
     - field.field.node.agency_component.field_request_data_year
     - field.field.node.agency_component.field_request_submission_form
+    - field.field.node.agency_component.field_require_manual_processing
     - field.field.node.agency_component.field_service_centers
     - field.field.node.agency_component.field_simple_average_days
     - field.field.node.agency_component.field_simple_highest_days
@@ -40,7 +45,7 @@ dependencies:
     - field.field.node.agency_component.field_submission_web
     - field.field.node.agency_component.field_website
     - node.type.agency_component
-    - workflows.workflow.quarterly_report_workflow
+    - workflows.workflow.annual_report_workflow
   module:
     - address
     - content_moderation
@@ -138,6 +143,7 @@ third_party_settings:
         required_fields: true
     group_processing_data:
       children:
+        - field_require_manual_processing
         - field_request_data_year
         - field_complex_average_days
         - field_complex_highest_days
@@ -158,8 +164,10 @@ third_party_settings:
       format_type: details
       format_settings:
         classes: ''
+        show_empty_fields: false
         id: ''
         open: true
+        description: 'Unless the checkbox below is checked, this data will be automatically populated from the annual report for this agency component. The data will be fetched from Section VII.A. - Processed Requests.'
         required_fields: true
     group_annual_foia_report_dates:
       children:
@@ -174,6 +182,22 @@ third_party_settings:
         classes: ''
         id: ''
         open: false
+        required_fields: true
+    group_interoperability:
+      children:
+        - field_interop_planned_method
+        - field_interop_exception
+      label: 'FOIA Portal Interoperability'
+      region: content
+      parent_name: ''
+      weight: 25
+      format_type: details
+      format_settings:
+        classes: ''
+        show_empty_fields: false
+        id: ''
+        open: false
+        description: ''
         required_fields: true
 id: node.agency_component.default
 targetEntityType: node
@@ -221,9 +245,17 @@ content:
     settings:
       placeholder: ''
     third_party_settings: {  }
+  field_commonly_requested_records:
+    type: string_textarea
+    weight: 28
+    region: content
+    settings:
+      rows: 5
+      placeholder: ''
+    third_party_settings: {  }
   field_complex_average_days:
     type: string_textfield
-    weight: 28
+    weight: 25
     region: content
     settings:
       size: 60
@@ -231,7 +263,7 @@ content:
     third_party_settings: {  }
   field_complex_highest_days:
     type: string_textfield
-    weight: 29
+    weight: 26
     region: content
     settings:
       size: 60
@@ -239,7 +271,7 @@ content:
     third_party_settings: {  }
   field_complex_lowest_days:
     type: string_textfield
-    weight: 30
+    weight: 27
     region: content
     settings:
       size: 60
@@ -247,7 +279,7 @@ content:
     third_party_settings: {  }
   field_complex_median_days:
     type: string_textfield
-    weight: 31
+    weight: 28
     region: content
     settings:
       size: 60
@@ -263,7 +295,7 @@ content:
     third_party_settings: {  }
   field_expedited_average_days:
     type: string_textfield
-    weight: 32
+    weight: 29
     region: content
     settings:
       size: 60
@@ -271,7 +303,7 @@ content:
     third_party_settings: {  }
   field_expedited_highest_days:
     type: string_textfield
-    weight: 33
+    weight: 30
     region: content
     settings:
       size: 60
@@ -279,7 +311,7 @@ content:
     third_party_settings: {  }
   field_expedited_lowest_days:
     type: string_textfield
-    weight: 34
+    weight: 31
     region: content
     settings:
       size: 60
@@ -287,7 +319,7 @@ content:
     third_party_settings: {  }
   field_expedited_median_days:
     type: string_textfield
-    weight: 35
+    weight: 32
     region: content
     settings:
       size: 60
@@ -308,6 +340,20 @@ content:
       allow_duplicate: false
       collapsible: false
       collapsed: false
+      revision: false
+      removed_reference: optional
+    third_party_settings: {  }
+  field_interop_exception:
+    type: options_select
+    weight: 30
+    region: content
+    settings: {  }
+    third_party_settings: {  }
+  field_interop_planned_method:
+    type: options_select
+    weight: 28
+    region: content
+    settings: {  }
     third_party_settings: {  }
   field_is_centralized:
     type: boolean_checkbox
@@ -331,6 +377,15 @@ content:
       allow_duplicate: false
       collapsible: false
       collapsed: false
+      revision: false
+      removed_reference: optional
+    third_party_settings: {  }
+  field_num_requests:
+    type: number
+    weight: 29
+    region: content
+    settings:
+      placeholder: ''
     third_party_settings: {  }
   field_portal_submission_format:
     type: options_select
@@ -353,6 +408,8 @@ content:
       allow_duplicate: false
       collapsible: false
       collapsed: false
+      revision: false
+      removed_reference: optional
     third_party_settings: {  }
   field_reading_rooms:
     type: link_default
@@ -377,6 +434,8 @@ content:
       allow_duplicate: false
       collapsible: false
       collapsed: false
+      revision: false
+      removed_reference: optional
     third_party_settings: {  }
   field_rep_exp:
     type: datetime_default
@@ -392,7 +451,7 @@ content:
     third_party_settings: {  }
   field_request_data_year:
     type: string_textfield
-    weight: 27
+    weight: 24
     region: content
     settings:
       size: 60
@@ -404,6 +463,14 @@ content:
     region: content
     settings:
       default_data: true
+      webforms: {  }
+    third_party_settings: {  }
+  field_require_manual_processing:
+    type: boolean_checkbox
+    weight: 23
+    region: content
+    settings:
+      display_label: true
     third_party_settings: {  }
   field_service_centers:
     type: inline_entity_form_complex
@@ -420,10 +487,12 @@ content:
       allow_duplicate: false
       collapsible: false
       collapsed: false
+      revision: false
+      removed_reference: optional
     third_party_settings: {  }
   field_simple_average_days:
     type: string_textfield
-    weight: 36
+    weight: 33
     region: content
     settings:
       size: 60
@@ -431,7 +500,7 @@ content:
     third_party_settings: {  }
   field_simple_highest_days:
     type: string_textfield
-    weight: 37
+    weight: 34
     region: content
     settings:
       size: 60
@@ -439,7 +508,7 @@ content:
     third_party_settings: {  }
   field_simple_lowest_days:
     type: string_textfield
-    weight: 38
+    weight: 35
     region: content
     settings:
       size: 60
@@ -447,7 +516,7 @@ content:
     third_party_settings: {  }
   field_simple_median_days:
     type: string_textfield
-    weight: 39
+    weight: 36
     region: content
     settings:
       size: 60
@@ -457,7 +526,8 @@ content:
     type: address_default
     weight: 7
     region: content
-    settings: {  }
+    settings:
+      wrapper_type: details
     third_party_settings: {  }
   field_submission_api:
     type: link_default
@@ -508,7 +578,7 @@ content:
     third_party_settings: {  }
   moderation_state:
     type: moderation_state_default
-    weight: 26
+    weight: 27
     region: content
     settings: {  }
     third_party_settings: {  }
@@ -527,7 +597,7 @@ content:
     third_party_settings: {  }
   status:
     type: boolean_checkbox
-    weight: 25
+    weight: 26
     region: content
     settings:
       display_label: true

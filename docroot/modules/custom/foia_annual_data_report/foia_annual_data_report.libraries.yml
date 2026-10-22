@@ -4,6 +4,8 @@ foia_change_report_agency:
   dependencies:
     - core/jquery
     - core/drupalSettings
+    - core/drupal.dialog.ajax
+    - core/jquery.form
 
 foia_annual_data_report_form_display_links:
   js:
@@ -16,3 +18,8 @@ foia_form_style_updates:
   css:
     theme:
       css/form-display-updates.css: {}
+
+foia_form_display_new_reports:
+  css:
+    theme:
+      css/form-display-new-reports.css: {}

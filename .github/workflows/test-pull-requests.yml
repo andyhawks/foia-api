@@ -1,0 +1,35 @@
+name: Test PRs
+
+on:
+  - pull_request
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+      - name: Set up ddev
+        uses: ddev/github-action-setup-ddev@v1
+      - name: Set up the site
+        run: |
+          ddev composer validate
+          ddev composer install
+          ddev drush site:install --existing-config -y --verbose 
+          ddev drush cim
+          ddev drush cr
+          ddev drush pmu samlauth
+          ddev drush pmu confirm_leave
+      - name: Validate PHP code
+        run: ./vendor/bin/phpcs || true
+      - name: Run tests
+        run: ddev exec vendor/bin/behat --config=tests/behat/behat.yml --stop-on-failure --strict --format=progress
+      - name: Upload screenshots of failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots
+          path: tests/behat/screenshots/*.png

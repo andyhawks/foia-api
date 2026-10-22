@@ -12,10 +12,10 @@ function ac_protect_this_site() {
   // Create the Request object and whitelist Acquia load balancers.
   $request = Request::createFromGlobals();
   if (!empty($config['ah_trusted_proxies'])) {
-    Request::setTrustedProxies($config['ah_trusted_proxies'], Request::HEADER_X_FORWARDED_ALL);
+    Request::setTrustedProxies($config['ah_trusted_proxies'], Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO);
   }
   else {
-    Request::setTrustedProxies(array($request->server->get('REMOTE_ADDR')), Request::HEADER_X_FORWARDED_ALL);
+    Request::setTrustedProxies(array($request->server->get('REMOTE_ADDR')), Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_HOST | Request::HEADER_X_FORWARDED_PORT | Request::HEADER_X_FORWARDED_PROTO);
   }
 
   $denied_response = !empty($config['ah_denied_not_found']) ? 404 : 403;
@@ -99,12 +99,12 @@ function ah_response($response, $client_ip, $current_path) {
     case 403:
       header('HTTP/1.0 403 Forbidden');
       header('Strict-Transport-Security: max-age=31536000; includeSubDomains; preload');
-      print "403 Forbidden: Access denied (${client_ip})";
+      print "403 Forbidden: Access denied ($client_ip)";
       exit;
       break;
     case 404:
       header('HTTP/1.0 404 Not Found');
-      print "<!DOCTYPE html><html><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested URL ${current_path} was not found on this server.</p></body></html>";
+      print "<!DOCTYPE html><html><head><title>404 Not Found</title></head><body><h1>Not Found</h1><p>The requested URL $current_path was not found on this server.</p></body></html>";
       exit;
       break;
   }
